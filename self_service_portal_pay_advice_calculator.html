@@ -64,6 +64,30 @@
             text-align: right;
             font-variant-numeric: tabular-nums;
         }
+
+        /* Responsive Mobile Styles */
+        @media (max-width: 640px) {
+            .advice-table {
+                font-size: 11px;
+            }
+            .advice-table th,
+            .advice-table td {
+                padding: 4px 6px;
+            }
+            .print-sheet {
+                padding: 12px 10px !important;
+            }
+        }
+
+        /* Hide tiny browser default spinners for number inputs to use clean custom steppers */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
@@ -118,35 +142,35 @@
 
     <!-- Top Portal Header Bar -->
     <header class="bg-white border-b border-slate-300 sticky top-0 z-20 shadow-xs">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between relative">
-            <!-- Left Print / Toggle Controls (No Print) -->
-            <div class="flex items-center gap-2 no-print z-10">
-                <button type="button" id="toggleControlsBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors">
+        <div class="max-w-6xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
+            <!-- Left Controls -->
+            <div class="flex items-center gap-1.5 no-print shrink-0">
+                <button type="button" id="toggleControlsBtn" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                     </svg>
-                    <span id="toggleControlsText">Hide Calculator</span>
+                    <span id="toggleControlsText" class="hidden sm:inline">Hide Calculator</span>
                 </button>
             </div>
 
-            <!-- Centered Blue Title -->
-            <div class="absolute inset-x-0 flex justify-center pointer-events-none">
-                <h1 class="text-xl sm:text-2xl font-normal tracking-tight text-[#003399] pay-advice-font">
+            <!-- Centered Title -->
+            <div class="flex-1 text-center truncate px-1">
+                <h1 class="text-sm sm:text-xl font-normal tracking-tight text-[#003399] pay-advice-font truncate">
                     Self Service Portal
                 </h1>
             </div>
 
             <!-- Top-Right User Pill Badge & Switch User Button -->
-            <div class="flex items-center gap-2 z-10">
-                <div class="inline-flex items-center gap-2 bg-[#0b3b8c] text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs">
-                    <span class="w-4 h-4 rounded-full bg-white text-[#0b3b8c] flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div class="inline-flex items-center gap-1.5 sm:gap-2 bg-[#0b3b8c] text-white px-2.5 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-xs">
+                    <span class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white text-[#0b3b8c] flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 sm:h-3 sm:w-3" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
                         </svg>
                     </span>
-                    <span id="headerUserName" class="uppercase tracking-wide max-w-[110px] sm:max-w-[180px] truncate">YOUR NAME</span>
+                    <span id="headerUserName" class="uppercase tracking-wide max-w-[75px] sm:max-w-[160px] truncate">YOUR NAME</span>
                 </div>
-                <button type="button" id="logoutBtn" title="Switch User / Re-login" class="no-print p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-xs transition-colors">
+                <button type="button" id="logoutBtn" title="Switch User / Re-login" class="no-print p-1 sm:p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-xs transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
@@ -170,24 +194,24 @@
 
         <!-- Interactive Salary Input Panel (Hidden when printing) -->
         <section id="calculatorPanel" class="no-print bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
-            <div class="bg-slate-50 px-4 sm:px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <div class="bg-slate-50 px-3 sm:px-6 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-[#003399]"></span>
-                    <h2 class="text-sm font-bold text-slate-800">Interactive Salary &amp; Pay Advice Calculator</h2>
-                    <span class="hidden md:inline-block text-xs text-slate-500">— Adjust values below to update the Pay Advice slip in real time</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#003399] shrink-0"></span>
+                    <h2 class="text-xs sm:text-sm font-bold text-slate-800">Salary &amp; Pay Advice Calculator</h2>
+                    <span class="hidden lg:inline-block text-xs text-slate-500">— Real-time Pay Advice Slip updates</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button type="button" id="resetBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-rose-50 hover:text-rose-700 border border-slate-300 transition-colors">
-                        Reset Defaults
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button type="button" id="resetBtn" class="flex-1 sm:flex-none text-center px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-rose-50 hover:text-rose-700 border border-slate-300 transition-colors">
+                        Reset
                     </button>
-                    <button type="button" id="copyBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 transition-colors">
-                        Copy Slip
+                    <button type="button" id="copyBtn" class="flex-1 sm:flex-none text-center px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 transition-colors">
+                        Copy
                     </button>
-                    <button type="button" id="printBtn" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b3b8c] hover:bg-blue-900 text-white shadow-xs transition-colors">
+                    <button type="button" id="printBtn" class="flex-1 sm:flex-none text-center inline-flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b3b8c] hover:bg-blue-900 text-white shadow-xs transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
-                        Print / Save PDF
+                        <span>Print</span>
                     </button>
                 </div>
             </div>
@@ -218,58 +242,78 @@
                     </div>
 
                     <!-- PH / OT Days (1.5x) -->
-                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <div class="bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-200">
                         <div class="flex items-center justify-between mb-1">
                             <label for="phOtDays" class="text-xs font-bold text-slate-700 uppercase">PH / OT Days (1.5x)</label>
-                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Off / Poya 1.5x</span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Off / Poya 1.5x</span>
                         </div>
-                        <input type="number" id="phOtDays" min="0" step="0.5" value="0.00"
-                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
-                        <p class="text-[11px] text-slate-500 mt-1.5">Off day / Poya holiday worked days (1.5x rate)</p>
+                        <div class="flex items-center rounded-lg border border-slate-300 bg-white overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20">
+                            <button type="button" class="stepper-btn stepper-dec px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="phOtDays" title="Decrease by 1">−</button>
+                            <input type="number" id="phOtDays" min="0" step="1" value="0.00"
+                                class="w-full bg-transparent px-1 py-2 text-center text-sm font-bold text-slate-900 outline-none">
+                            <button type="button" class="stepper-btn stepper-inc px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="phOtDays" title="Increase by 1">+</button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Off day / Poya worked days</p>
                     </div>
 
                     <!-- EDP Incentive Days (1.5x) -->
-                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <div class="bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-200">
                         <div class="flex items-center justify-between mb-1">
                             <label for="edpDays" class="text-xs font-bold text-slate-700 uppercase">EDP Incentive (1.5x)</label>
-                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">1.5x Rate</span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">1.5x Rate</span>
                         </div>
-                        <input type="number" id="edpDays" min="0" step="0.5" value="0.00"
-                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
-                        <p class="text-[11px] text-slate-500 mt-1.5">Extra shift / EDP incentive days (1.5x rate)</p>
+                        <div class="flex items-center rounded-lg border border-slate-300 bg-white overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20">
+                            <button type="button" class="stepper-btn stepper-dec px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="edpDays" title="Decrease by 1">−</button>
+                            <input type="number" id="edpDays" min="0" step="1" value="0.00"
+                                class="w-full bg-transparent px-1 py-2 text-center text-sm font-bold text-slate-900 outline-none">
+                            <button type="button" class="stepper-btn stepper-inc px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="edpDays" title="Increase by 1">+</button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Extra shift / EDP incentive days (1.5x)</p>
                     </div>
 
                     <!-- Mercantile Holiday Days (2.0x) -->
-                    <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-200/80">
+                    <div class="bg-indigo-50/40 p-3 sm:p-3.5 rounded-xl border border-indigo-200/80">
                         <div class="flex items-center justify-between mb-1">
                             <label for="mercantileDays" class="text-xs font-bold text-slate-700 uppercase">Mercantile Days (2.0x)</label>
-                            <span class="text-[11px] font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">2.0x Rate</span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">2.0x Rate</span>
                         </div>
-                        <input type="number" id="mercantileDays" min="0" step="0.5" value="0.00"
-                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none">
-                        <p class="text-[11px] text-slate-500 mt-1.5">Mercantile holidays worked (paid at 2.0x daily rate)</p>
+                        <div class="flex items-center rounded-lg border border-indigo-200 bg-white overflow-hidden focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-500/20">
+                            <button type="button" class="stepper-btn stepper-dec px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="mercantileDays" title="Decrease by 1">−</button>
+                            <input type="number" id="mercantileDays" min="0" step="1" value="0.00"
+                                class="w-full bg-transparent px-1 py-2 text-center text-sm font-bold text-slate-900 outline-none">
+                            <button type="button" class="stepper-btn stepper-inc px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="mercantileDays" title="Increase by 1">+</button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Mercantile holidays worked (2.0x rate)</p>
                     </div>
 
                     <!-- Leaves / No Pay (Full Days) -->
-                    <div class="bg-rose-50/50 p-3.5 rounded-xl border border-rose-200">
+                    <div class="bg-rose-50/50 p-3 sm:p-3.5 rounded-xl border border-rose-200">
                         <div class="flex items-center justify-between mb-1">
                             <label for="leaveDays" class="text-xs font-bold text-slate-700 uppercase">No Pay Leaves (Full)</label>
-                            <span class="text-[11px] font-semibold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">1.0x Cut</span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">1.0x Cut</span>
                         </div>
-                        <input type="number" id="leaveDays" min="0" step="0.5" value="0.00"
-                            class="w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-400/20 outline-none">
-                        <p class="text-[11px] text-slate-500 mt-1.5">Full day unpaid leaves (1.0x daily rate deduction)</p>
+                        <div class="flex items-center rounded-lg border border-rose-200 bg-white overflow-hidden focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-400/20">
+                            <button type="button" class="stepper-btn stepper-dec px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="leaveDays" title="Decrease by 1">−</button>
+                            <input type="number" id="leaveDays" min="0" step="1" value="0.00"
+                                class="w-full bg-transparent px-1 py-2 text-center text-sm font-bold text-slate-900 outline-none">
+                            <button type="button" class="stepper-btn stepper-inc px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="leaveDays" title="Increase by 1">+</button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Full day unpaid leaves (1.0x rate deduction)</p>
                     </div>
 
                     <!-- Half Days -->
-                    <div class="bg-orange-50/50 p-3.5 rounded-xl border border-orange-200">
+                    <div class="bg-orange-50/50 p-3 sm:p-3.5 rounded-xl border border-orange-200">
                         <div class="flex items-center justify-between mb-1">
                             <label for="halfDays" class="text-xs font-bold text-slate-700 uppercase">Half Days</label>
-                            <span class="text-[11px] font-semibold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">0.5x Cut</span>
+                            <span class="text-[10px] sm:text-[11px] font-semibold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">0.5x Cut</span>
                         </div>
-                        <input type="number" id="halfDays" min="0" step="0.5" value="0.00"
-                            class="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 outline-none">
-                        <p class="text-[11px] text-slate-500 mt-1.5">Half days taken (0.5x daily rate deduction)</p>
+                        <div class="flex items-center rounded-lg border border-orange-200 bg-white overflow-hidden focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-400/20">
+                            <button type="button" class="stepper-btn stepper-dec px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="halfDays" title="Decrease by 1">−</button>
+                            <input type="number" id="halfDays" min="0" step="1" value="0.00"
+                                class="w-full bg-transparent px-1 py-2 text-center text-sm font-bold text-slate-900 outline-none">
+                            <button type="button" class="stepper-btn stepper-inc px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold select-none text-base transition-colors" data-target="halfDays" title="Increase by 1">+</button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Half days taken (0.5x rate deduction)</p>
                     </div>
 
                     <!-- Stamp Duty (USD) -->
@@ -852,6 +896,22 @@
             divisorBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     dayDivisorInput.value = btn.getAttribute('data-divisor');
+                    updatePayAdvice();
+                });
+            });
+
+            // Stepper buttons for day-count inputs (+/- buttons)
+            document.querySelectorAll('.stepper-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    const step = parseFloat(input.step) || 1;
+                    const current = parseFloat(input.value) || 0;
+                    if (btn.classList.contains('stepper-dec')) {
+                        input.value = Math.max(0, current - step);
+                    } else {
+                        input.value = current + step;
+                    }
                     updatePayAdvice();
                 });
             });
