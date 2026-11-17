@@ -194,7 +194,7 @@
 
             <div class="p-4 sm:p-6 space-y-5">
                 <!-- Row 1: Salary, Extra Days, and USD->LKR Rate -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Basic Salary (USD) -->
                     <div class="bg-blue-50/40 p-3.5 rounded-xl border border-blue-200/80">
                         <div class="flex items-center justify-between mb-1">
@@ -248,6 +248,28 @@
                         <input type="number" id="mercantileDays" min="0" step="0.5" value="0.00"
                             class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none">
                         <p class="text-[11px] text-slate-500 mt-1.5">Mercantile holidays worked (paid at 2.0x daily rate)</p>
+                    </div>
+
+                    <!-- Leaves / No Pay (Full Days) -->
+                    <div class="bg-rose-50/50 p-3.5 rounded-xl border border-rose-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="leaveDays" class="text-xs font-bold text-slate-700 uppercase">No Pay Leaves (Full)</label>
+                            <span class="text-[11px] font-semibold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">1.0x Cut</span>
+                        </div>
+                        <input type="number" id="leaveDays" min="0" step="0.5" value="0.00"
+                            class="w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-400/20 outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1.5">Full day unpaid leaves (1.0x daily rate deduction)</p>
+                    </div>
+
+                    <!-- Half Days -->
+                    <div class="bg-orange-50/50 p-3.5 rounded-xl border border-orange-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="halfDays" class="text-xs font-bold text-slate-700 uppercase">Half Days</label>
+                            <span class="text-[11px] font-semibold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded">0.5x Cut</span>
+                        </div>
+                        <input type="number" id="halfDays" min="0" step="0.5" value="0.00"
+                            class="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1.5">Half days taken (0.5x daily rate deduction)</p>
                     </div>
 
                     <!-- Stamp Duty (USD) -->
@@ -371,6 +393,11 @@
                             <td class="num-col" id="slipEpfEmpLKR">16.00</td>
                             <td class="num-col" id="slipEpfEmpUSD">16.00</td>
                         </tr>
+                        <tr id="leaveDedRow" class="hidden">
+                            <td class="label-col">NO PAY / LEAVE DEDUCTION</td>
+                            <td class="num-col text-rose-700" id="slipLeaveDedLKR">0.00</td>
+                            <td class="num-col text-rose-700" id="slipLeaveDedUSD">0.00</td>
+                        </tr>
                         <tr>
                             <td class="label-col">STAMP DUTY.</td>
                             <td class="num-col" id="slipStampLKR">0.08</td>
@@ -461,6 +488,16 @@
                             <td class="num-col" id="slipMercantileDaysCol1">0.00</td>
                             <td class="num-col">0.00</td>
                         </tr>
+                        <tr id="leaveDaysRow" class="hidden">
+                            <td class="label-col">NO PAY LEAVE ( DAYS )</td>
+                            <td class="num-col text-rose-700" id="slipLeaveDaysCol1">0.00</td>
+                            <td class="num-col">0.00</td>
+                        </tr>
+                        <tr id="halfDaysRow" class="hidden">
+                            <td class="label-col">HALF DAY ( DAYS )</td>
+                            <td class="num-col text-orange-700" id="slipHalfDaysCol1">0.00</td>
+                            <td class="num-col">0.00</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -500,6 +537,8 @@
             const phOtDaysInput = document.getElementById('phOtDays');
             const edpDaysInput = document.getElementById('edpDays');
             const mercantileDaysInput = document.getElementById('mercantileDays');
+            const leaveDaysInput = document.getElementById('leaveDays');
+            const halfDaysInput = document.getElementById('halfDays');
             const stampDutyInput = document.getElementById('stampDuty');
             const exchangeRateInput = document.getElementById('exchangeRate');
 
@@ -536,6 +575,9 @@
 
             const slipEpfEmpLKR = document.getElementById('slipEpfEmpLKR');
             const slipEpfEmpUSD = document.getElementById('slipEpfEmpUSD');
+            const leaveDedRow = document.getElementById('leaveDedRow');
+            const slipLeaveDedLKR = document.getElementById('slipLeaveDedLKR');
+            const slipLeaveDedUSD = document.getElementById('slipLeaveDedUSD');
             const slipStampLKR = document.getElementById('slipStampLKR');
             const slipStampUSD = document.getElementById('slipStampUSD');
             const slipTotalDedLKR = document.getElementById('slipTotalDedLKR');
@@ -559,6 +601,10 @@
             const slipEdpDaysCol1 = document.getElementById('slipEdpDaysCol1');
             const mercantileDaysRow = document.getElementById('mercantileDaysRow');
             const slipMercantileDaysCol1 = document.getElementById('slipMercantileDaysCol1');
+            const leaveDaysRow = document.getElementById('leaveDaysRow');
+            const slipLeaveDaysCol1 = document.getElementById('slipLeaveDaysCol1');
+            const halfDaysRow = document.getElementById('halfDaysRow');
+            const slipHalfDaysCol1 = document.getElementById('slipHalfDaysCol1');
 
             const slipNetUSDDisplay = document.getElementById('slipNetUSDDisplay');
             const slipNetLKRDisplay = document.getElementById('slipNetLKRDisplay');
@@ -615,6 +661,8 @@
                     const phOtDays = Math.max(0, parseFloat(phOtDaysInput.value) || 0);
                     const edpDays = Math.max(0, parseFloat(edpDaysInput.value) || 0);
                     const mercantileDays = Math.max(0, parseFloat(mercantileDaysInput.value) || 0);
+                    const leaveDays = Math.max(0, parseFloat(leaveDaysInput.value) || 0);
+                    const halfDays = Math.max(0, parseFloat(halfDaysInput.value) || 0);
                     const stampDuty = Math.max(0, parseFloat(stampDutyInput.value) || 0);
                     const fxRate = Math.max(0, parseFloat(exchangeRateInput.value) || 0);
 
@@ -628,9 +676,14 @@
                     const mercantileUSD = dailyRate * 2.0 * mercantileDays;
                     const grossUSD = basic + phOtUSD + edpUSD + mercantileUSD;
 
+                    // Leave / No Pay Deductions (1.0x Full Day, 0.5x Half Day)
+                    const fullDayDedUSD = dailyRate * leaveDays;
+                    const halfDayDedUSD = (dailyRate * 0.5) * halfDays;
+                    const totalLeaveDedUSD = fullDayDedUSD + halfDayDedUSD;
+
                     // Deductions in Currency (USD)
                     const epfEmpUSD = basic * 0.08;
-                    const totalDedUSD = epfEmpUSD + stampDuty;
+                    const totalDedUSD = epfEmpUSD + stampDuty + totalLeaveDedUSD;
 
                     // Net Salary in Currency (USD)
                     const netUSD = Math.max(0, grossUSD - totalDedUSD);
@@ -670,6 +723,14 @@
                     slipEpfEmpUSD.textContent = fmt(epfEmpUSD);
                     slipEpfEmpLKR.textContent = fmt(epfEmpUSD * lkrMultiplier);
 
+                    if (totalLeaveDedUSD > 0) {
+                        leaveDedRow.classList.remove('hidden');
+                        slipLeaveDedUSD.textContent = fmt(totalLeaveDedUSD);
+                        slipLeaveDedLKR.textContent = fmt(totalLeaveDedUSD * lkrMultiplier);
+                    } else {
+                        leaveDedRow.classList.add('hidden');
+                    }
+
                     slipStampUSD.textContent = fmt(stampDuty);
                     slipStampLKR.textContent = fmt(stampDuty * lkrMultiplier);
 
@@ -701,6 +762,20 @@
                     slipEdpDaysCol1.textContent = fmt(edpDays);
                     slipMercantileDaysCol1.textContent = fmt(mercantileDays);
 
+                    if (leaveDays > 0) {
+                        leaveDaysRow.classList.remove('hidden');
+                        slipLeaveDaysCol1.textContent = fmt(leaveDays);
+                    } else {
+                        leaveDaysRow.classList.add('hidden');
+                    }
+
+                    if (halfDays > 0) {
+                        halfDaysRow.classList.remove('hidden');
+                        slipHalfDaysCol1.textContent = fmt(halfDays);
+                    } else {
+                        halfDaysRow.classList.add('hidden');
+                    }
+
                     // Populate Footer Net Salary Displays (USD & LKR)
                     const netLKRValue = netUSD * (fxRate > 0 ? fxRate : 1);
                     slipNetUSDDisplay.textContent = `$${fmt(netUSD)}`;
@@ -715,6 +790,7 @@
 
                     return {
                         basic, phOtDays, phOtUSD, edpDays, edpUSD, mercantileDays, mercantileUSD,
+                        leaveDays, halfDays, totalLeaveDedUSD,
                         grossUSD, epfEmpUSD, stampDuty, totalDedUSD, netUSD, fxRate,
                         netLKR: netLKRValue
                     };
@@ -771,7 +847,8 @@
             // Attach input listeners
             const allInputs = [
                 basicSalaryInput, dayDivisorInput, phOtDaysInput, edpDaysInput,
-                mercantileDaysInput, stampDutyInput, exchangeRateInput,
+                mercantileDaysInput, leaveDaysInput, halfDaysInput,
+                stampDutyInput, exchangeRateInput,
                 inputMonth, inputEmpName
             ];
             allInputs.forEach(el => el.addEventListener('input', updatePayAdvice));
@@ -802,6 +879,8 @@
                 phOtDaysInput.value = '0.00';
                 edpDaysInput.value = '0.00';
                 mercantileDaysInput.value = '0.00';
+                leaveDaysInput.value = '0.00';
+                halfDaysInput.value = '0.00';
                 stampDutyInput.value = '0.08';
                 exchangeRateInput.value = '0.00';
                 updatePayAdvice();
@@ -824,6 +903,7 @@
                     `GROSS PAY: ${fmt(d.grossUSD)} USD`,
                     `----------------------------------------`,
                     `E.P.F. EMPLOYEE (8%): -${fmt(d.epfEmpUSD)} USD`,
+                    d.totalLeaveDedUSD > 0 ? `NO PAY LEAVE (${fmt(d.leaveDays)} full, ${fmt(d.halfDays)} half): -${fmt(d.totalLeaveDedUSD)} USD` : null,
                     `STAMP DUTY: -${fmt(d.stampDuty)} USD`,
                     `GROSS DEDUCTION: -${fmt(d.totalDedUSD)} USD`,
                     `----------------------------------------`,
