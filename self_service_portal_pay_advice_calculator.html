@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Service Portal - Pay Advice Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter & Arial/Helvetica for authentic pay advice typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Print styles to cleanly print only the Pay Advice sheet */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-sheet {
+                box-shadow: none !important;
+                border: 1px solid #444 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 16px !important;
+            }
+        }
+
+        /* Authentic Pay Advice Table Styling matching screenshot */
+        .pay-advice-font {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .advice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .advice-table th,
+        .advice-table td {
+            border: 1px solid #333333;
+            padding: 5px 8px;
+            color: #111111;
+        }
+        .advice-table th {
+            font-weight: 700;
+            text-align: center;
+            background-color: #ffffff;
+            letter-spacing: 0.2px;
+        }
+        .advice-table td.label-col {
+            width: 34%;
+            font-weight: 700;
+            text-align: left;
+        }
+        .advice-table td.num-col {
+            width: 33%;
+            font-weight: 700;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- 1. Initial Splash Loader -->
+    <div id="initialSplash" class="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div class="text-center">
+                <h3 class="text-white text-base font-bold tracking-wider uppercase">Self Service Portal</h3>
+                <p class="text-slate-400 text-xs mt-1">Initializing...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Employee Name Login Screen Modal -->
+    <div id="loginScreen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 flex items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 text-[#003399] mb-1 shadow-inner">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 pay-advice-font">Self Service Portal</h2>
+                <p class="text-xs text-slate-500">Please enter your Employee Name to access your Pay Advice</p>
+            </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="loginNameInput" class="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wider">Your Name</label>
+                    <input type="text" id="loginNameInput" placeholder="Your Name" required autofocus
+                        class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 uppercase focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:normal-case placeholder:text-slate-400">
+                    <p id="loginError" class="text-[11px] text-rose-600 mt-1.5 hidden font-medium">Please enter your name to proceed.</p>
+                </div>
+
+                <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 px-4 bg-[#0b3b8c] hover:bg-blue-900 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                    <span>Access Pay Advice</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Loading transition after clicking login -->
+            <div id="loginLoadingState" class="hidden text-center py-4 space-y-3">
+                <div class="inline-block w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs font-semibold text-slate-700">Loading your Pay Advice...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Portal Header Bar -->
+    <header class="bg-white border-b border-slate-300 sticky top-0 z-20 shadow-xs">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between relative">
+            <!-- Left Print / Toggle Controls (No Print) -->
+            <div class="flex items-center gap-2 no-print z-10">
+                <button type="button" id="toggleControlsBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                    <span id="toggleControlsText">Hide Calculator</span>
+                </button>
+            </div>
+
+            <!-- Centered Blue Title -->
+            <div class="absolute inset-x-0 flex justify-center pointer-events-none">
+                <h1 class="text-xl sm:text-2xl font-normal tracking-tight text-[#003399] pay-advice-font">
+                    Self Service Portal
+                </h1>
+            </div>
+
+            <!-- Top-Right User Pill Badge & Switch User Button -->
+            <div class="flex items-center gap-2 z-10">
+                <div class="inline-flex items-center gap-2 bg-[#0b3b8c] text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs">
+                    <span class="w-4 h-4 rounded-full bg-white text-[#0b3b8c] flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                    <span id="headerUserName" class="uppercase tracking-wide max-w-[110px] sm:max-w-[180px] truncate">YOUR NAME</span>
+                </div>
+                <button type="button" id="logoutBtn" title="Switch User / Re-login" class="no-print p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-xs transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification -->
+    <div id="toastMessage" class="no-print fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-xs font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span id="toastText">Pay Advice summary copied!</span>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="max-w-6xl w-full mx-auto px-3 sm:px-6 py-5 sm:py-7 flex-grow space-y-6">
+
+        <!-- Interactive Salary Input Panel (Hidden when printing) -->
+        <section id="calculatorPanel" class="no-print bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
+            <div class="bg-slate-50 px-4 sm:px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#003399]"></span>
+                    <h2 class="text-sm font-bold text-slate-800">Interactive Salary &amp; Pay Advice Calculator</h2>
+                    <span class="hidden md:inline-block text-xs text-slate-500">— Adjust values below to update the Pay Advice slip in real time</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="resetBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white hover:bg-rose-50 hover:text-rose-700 border border-slate-300 transition-colors">
+                        Reset Defaults
+                    </button>
+                    <button type="button" id="copyBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 transition-colors">
+                        Copy Slip
+                    </button>
+                    <button type="button" id="printBtn" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b3b8c] hover:bg-blue-900 text-white shadow-xs transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Print / Save PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-6 space-y-5">
+                <!-- Row 1: Salary, Extra Days, and USD->LKR Rate -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Basic Salary (USD) -->
+                    <div class="bg-blue-50/40 p-3.5 rounded-xl border border-blue-200/80">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="basicSalary" class="text-xs font-bold text-slate-700 uppercase">Basic Salary (USD)</label>
+                            <span class="text-[11px] font-semibold text-blue-800" id="dailyRateDisplay">Daily: $6.67</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm font-bold">$</span>
+                            <input type="number" id="basicSalary" min="0" step="0.01" value="200.00"
+                                class="w-full rounded-lg border border-slate-300 bg-white pl-7 pr-3 py-2 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                        </div>
+                        <div class="mt-2 flex items-center justify-between gap-2">
+                            <span class="text-[11px] text-slate-500">Day Divisor:</span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" data-divisor="30" class="divisor-btn px-2 py-0.5 text-[11px] font-semibold rounded bg-[#0b3b8c] text-white">30d</button>
+                                <button type="button" data-divisor="26" class="divisor-btn px-2 py-0.5 text-[11px] font-semibold rounded bg-white text-slate-600 border border-slate-300">26d</button>
+                                <input type="number" id="dayDivisor" min="1" max="31" value="30" title="Custom Day Divisor"
+                                    class="w-12 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-center text-[11px] font-bold text-slate-800 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PH / OT Days (1.5x) -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="phOtDays" class="text-xs font-bold text-slate-700 uppercase">PH / OT Days (1.5x)</label>
+                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Off / Poya 1.5x</span>
+                        </div>
+                        <input type="number" id="phOtDays" min="0" step="0.5" value="0.00"
+                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1.5">Off day / Poya holiday worked days (1.5x rate)</p>
+                    </div>
+
+                    <!-- EDP Incentive Days (1.5x) -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="edpDays" class="text-xs font-bold text-slate-700 uppercase">EDP Incentive (1.5x)</label>
+                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">1.5x Rate</span>
+                        </div>
+                        <input type="number" id="edpDays" min="0" step="0.5" value="0.00"
+                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1.5">Extra shift / EDP incentive days (1.5x rate)</p>
+                    </div>
+
+                    <!-- Mercantile Holiday Days (2.0x) -->
+                    <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-200/80">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="mercantileDays" class="text-xs font-bold text-slate-700 uppercase">Mercantile Days (2.0x)</label>
+                            <span class="text-[11px] font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">2.0x Rate</span>
+                        </div>
+                        <input type="number" id="mercantileDays" min="0" step="0.5" value="0.00"
+                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1.5">Mercantile holidays worked (paid at 2.0x daily rate)</p>
+                    </div>
+
+                    <!-- Stamp Duty (USD) -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="stampDuty" class="text-xs font-bold text-slate-700 uppercase">Stamp Duty (USD)</label>
+                            <span class="text-[11px] font-medium text-slate-500">EPF: 8% Fixed</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm font-bold">$</span>
+                            <input type="number" id="stampDuty" min="0" step="0.01" value="0.08"
+                                class="w-full rounded-lg border border-slate-300 bg-white pl-7 pr-3 py-2 text-sm font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1.5">Default $0.08 (or set $0.25 if fixed USD stamp)</p>
+                    </div>
+
+                    <!-- USD to LKR Exchange Rate -->
+                    <div class="bg-amber-50/60 p-3.5 rounded-xl border border-amber-300/80">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="exchangeRate" class="text-xs font-bold text-slate-800 uppercase">USD to LKR Rate</label>
+                            <span class="text-[11px] font-semibold text-amber-800">1 USD = ? LKR</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs font-bold">LKR</span>
+                            <input type="number" id="exchangeRate" min="0" step="0.01" value="0.00" placeholder="e.g. 300.00"
+                                class="w-full rounded-lg border border-amber-300 bg-white pl-11 pr-3 py-2 text-sm font-bold text-slate-900 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 outline-none">
+                        </div>
+                        <p class="text-[11px] text-slate-600 mt-1.5">Enter rate (e.g. 300) to convert LKR amounts</p>
+                    </div>
+                </div>
+
+                <!-- Collapsible Month & Employee Name Details Editor -->
+                <details class="group border border-slate-200 rounded-xl bg-slate-50/60">
+                    <summary class="cursor-pointer px-4 py-2.5 text-xs font-bold text-slate-700 flex items-center justify-between select-none">
+                        <span>Edit Pay Month &amp; Name (Optional)</span>
+                        <span class="text-blue-700 group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div class="p-4 pt-2 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Pay Month &amp; Year</label>
+                            <input type="text" id="inputMonth" value="OCTOBER 2026" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-medium uppercase outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Employee Name</label>
+                            <input type="text" id="inputEmpName" value="YOUR NAME" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-medium uppercase outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- OFFICIAL PAY ADVICE DOCUMENT -->
+        <section class="print-sheet bg-white border border-slate-400 shadow-sm p-4 sm:p-8 pay-advice-font text-[#111111]">
+            
+            <!-- Pay Advice Top Title -->
+            <div class="text-center pb-5 pt-2">
+                <h2 class="text-sm sm:text-base font-bold tracking-wider text-[#003399] uppercase">
+                    PAY ADVICE FOR THE MONTH OF <span id="slipMonth">OCTOBER 2026</span>
+                </h2>
+            </div>
+
+            <!-- Employee Information (Only Name) -->
+            <div class="border-t border-slate-400 pt-3 pb-3 flex items-center text-xs">
+                <span class="font-bold text-slate-800 uppercase mr-3">NAME :</span>
+                <span class="font-bold text-slate-900 uppercase tracking-wide" id="slipEmpName">YOUR NAME</span>
+            </div>
+
+            <!-- TABLE 1: EARNINGS -->
+            <div class="overflow-x-auto">
+                <table class="advice-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%;">EARNINGS</th>
+                            <th style="width: 33%;">AMOUNT IN LKR</th>
+                            <th style="width: 33%;">AMOUNT IN CURRENCY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="label-col">BASIC SALARY</td>
+                            <td class="num-col" id="slipBasicLKR">200.00</td>
+                            <td class="num-col" id="slipBasicUSD">200.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">PH / OT</td>
+                            <td class="num-col" id="slipPhOtLKR">20.00</td>
+                            <td class="num-col" id="slipPhOtUSD">20.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">EDP INCENTIVE</td>
+                            <td class="num-col" id="slipEdpLKR">30.00</td>
+                            <td class="num-col" id="slipEdpUSD">30.00</td>
+                        </tr>
+                        <tr id="mercantileEarningsRow">
+                            <td class="label-col">MERCANTILE OT (2.0X)</td>
+                            <td class="num-col" id="slipMercantileLKR">0.00</td>
+                            <td class="num-col" id="slipMercantileUSD">0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">&nbsp;</td>
+                            <td class="num-col" id="slipTotalEarningsLKR">250.00</td>
+                            <td class="num-col" id="slipTotalEarningsUSD">250.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TABLE 2: DEDUCTIONS -->
+            <div class="overflow-x-auto">
+                <table class="advice-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%;">DEDUCTIONS</th>
+                            <th style="width: 33%;"></th>
+                            <th style="width: 33%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="label-col">E.P.F. EMPLOYEE CONTRIBUTION</td>
+                            <td class="num-col" id="slipEpfEmpLKR">16.00</td>
+                            <td class="num-col" id="slipEpfEmpUSD">16.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">STAMP DUTY.</td>
+                            <td class="num-col" id="slipStampLKR">0.08</td>
+                            <td class="num-col" id="slipStampUSD">0.08</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">&nbsp;</td>
+                            <td class="num-col" id="slipTotalDedLKR">16.08</td>
+                            <td class="num-col" id="slipTotalDedUSD">16.08</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TABLE 3: SUMMARY -->
+            <div class="overflow-x-auto">
+                <table class="advice-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%;">SUMMARY</th>
+                            <th style="width: 33%;"></th>
+                            <th style="width: 33%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="label-col">GROSS PAY</td>
+                            <td class="num-col" id="slipGrossPayLKR">250.00</td>
+                            <td class="num-col" id="slipGrossPayUSD">250.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">GROSS DEDUCTION</td>
+                            <td class="num-col" id="slipGrossDedLKR">16.08</td>
+                            <td class="num-col" id="slipGrossDedUSD">16.08</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">NET SALARY</td>
+                            <td class="num-col" id="slipNetSalaryLKR">233.92</td>
+                            <td class="num-col" id="slipNetSalaryUSD">233.92</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TABLE 4 & 5 COMBINED: P/FUND SUMMARY & HOURS/DAYS -->
+            <div class="overflow-x-auto">
+                <table class="advice-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%;">P/FUND SUMMARY</th>
+                            <th style="width: 33%;"></th>
+                            <th style="width: 33%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="label-col">TOTAL FOR P.F.</td>
+                            <td class="num-col" id="slipTotalPfLKR">200.00</td>
+                            <td class="num-col" id="slipTotalPfUSD">200.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">P.F. EMPLOYER'S CONTRIBUTION.</td>
+                            <td class="num-col" id="slipPfEmployerLKR">24.00</td>
+                            <td class="num-col" id="slipPfEmployerUSD">24.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">E.T.F. CONTRIBUTION.</td>
+                            <td class="num-col" id="slipEtfLKR">6.00</td>
+                            <td class="num-col" id="slipEtfUSD">6.00</td>
+                        </tr>
+                        <tr>
+                            <th style="width: 34%;">HOURS/DAYS</th>
+                            <th style="width: 33%;"></th>
+                            <th style="width: 33%;"></th>
+                        </tr>
+                        <tr>
+                            <td class="label-col">PH / OT ( DAYS )</td>
+                            <td class="num-col" id="slipPhOtDaysCol1">2.00</td>
+                            <td class="num-col">0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">EDP INCENTIVE ( DAYS )</td>
+                            <td class="num-col" id="slipEdpDaysCol1">3.00</td>
+                            <td class="num-col">0.00</td>
+                        </tr>
+                        <tr id="mercantileDaysRow">
+                            <td class="label-col">MERCANTILE ( DAYS )</td>
+                            <td class="num-col" id="slipMercantileDaysCol1">0.00</td>
+                            <td class="num-col">0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer: Clean Net Salary Display (USD and LKR) -->
+            <div class="pt-3 border-t border-slate-300 text-xs text-slate-900">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded border border-slate-200">
+                    <div class="flex items-center justify-between sm:justify-start sm:gap-4">
+                        <span class="font-bold text-slate-700 uppercase">NET SALARY (USD) :</span>
+                        <span id="slipNetUSDDisplay" class="font-bold text-[#003399] text-sm sm:text-base font-mono">$233.92</span>
+                    </div>
+                    <div class="flex items-center justify-between sm:justify-start sm:gap-4">
+                        <span class="font-bold text-slate-700 uppercase">NET SALARY (LKR) :</span>
+                        <span id="slipNetLKRDisplay" class="font-bold text-emerald-700 text-sm sm:text-base font-mono">LKR 233.92</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Application Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Splash & Login Elements
+            const initialSplash = document.getElementById('initialSplash');
+            const loginScreen = document.getElementById('loginScreen');
+            const loginForm = document.getElementById('loginForm');
+            const loginNameInput = document.getElementById('loginNameInput');
+            const loginError = document.getElementById('loginError');
+            const loginLoadingState = document.getElementById('loginLoadingState');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            // Calculator Inputs
+            const basicSalaryInput = document.getElementById('basicSalary');
+            const dayDivisorInput = document.getElementById('dayDivisor');
+            const phOtDaysInput = document.getElementById('phOtDays');
+            const edpDaysInput = document.getElementById('edpDays');
+            const mercantileDaysInput = document.getElementById('mercantileDays');
+            const stampDutyInput = document.getElementById('stampDuty');
+            const exchangeRateInput = document.getElementById('exchangeRate');
+
+            // Metadata Inputs
+            const inputMonth = document.getElementById('inputMonth');
+            const inputEmpName = document.getElementById('inputEmpName');
+
+            // Buttons & UI Controls
+            const divisorBtns = document.querySelectorAll('.divisor-btn');
+            const toggleControlsBtn = document.getElementById('toggleControlsBtn');
+            const toggleControlsText = document.getElementById('toggleControlsText');
+            const calculatorPanel = document.getElementById('calculatorPanel');
+            const resetBtn = document.getElementById('resetBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const printBtn = document.getElementById('printBtn');
+            const dailyRateDisplay = document.getElementById('dailyRateDisplay');
+
+            // Slip Output Elements
+            const headerUserName = document.getElementById('headerUserName');
+            const slipMonth = document.getElementById('slipMonth');
+            const slipEmpName = document.getElementById('slipEmpName');
+
+            const slipBasicLKR = document.getElementById('slipBasicLKR');
+            const slipBasicUSD = document.getElementById('slipBasicUSD');
+            const slipPhOtLKR = document.getElementById('slipPhOtLKR');
+            const slipPhOtUSD = document.getElementById('slipPhOtUSD');
+            const slipEdpLKR = document.getElementById('slipEdpLKR');
+            const slipEdpUSD = document.getElementById('slipEdpUSD');
+            const mercantileEarningsRow = document.getElementById('mercantileEarningsRow');
+            const slipMercantileLKR = document.getElementById('slipMercantileLKR');
+            const slipMercantileUSD = document.getElementById('slipMercantileUSD');
+            const slipTotalEarningsLKR = document.getElementById('slipTotalEarningsLKR');
+            const slipTotalEarningsUSD = document.getElementById('slipTotalEarningsUSD');
+
+            const slipEpfEmpLKR = document.getElementById('slipEpfEmpLKR');
+            const slipEpfEmpUSD = document.getElementById('slipEpfEmpUSD');
+            const slipStampLKR = document.getElementById('slipStampLKR');
+            const slipStampUSD = document.getElementById('slipStampUSD');
+            const slipTotalDedLKR = document.getElementById('slipTotalDedLKR');
+            const slipTotalDedUSD = document.getElementById('slipTotalDedUSD');
+
+            const slipGrossPayLKR = document.getElementById('slipGrossPayLKR');
+            const slipGrossPayUSD = document.getElementById('slipGrossPayUSD');
+            const slipGrossDedLKR = document.getElementById('slipGrossDedLKR');
+            const slipGrossDedUSD = document.getElementById('slipGrossDedUSD');
+            const slipNetSalaryLKR = document.getElementById('slipNetSalaryLKR');
+            const slipNetSalaryUSD = document.getElementById('slipNetSalaryUSD');
+
+            const slipTotalPfLKR = document.getElementById('slipTotalPfLKR');
+            const slipTotalPfUSD = document.getElementById('slipTotalPfUSD');
+            const slipPfEmployerLKR = document.getElementById('slipPfEmployerLKR');
+            const slipPfEmployerUSD = document.getElementById('slipPfEmployerUSD');
+            const slipEtfLKR = document.getElementById('slipEtfLKR');
+            const slipEtfUSD = document.getElementById('slipEtfUSD');
+
+            const slipPhOtDaysCol1 = document.getElementById('slipPhOtDaysCol1');
+            const slipEdpDaysCol1 = document.getElementById('slipEdpDaysCol1');
+            const mercantileDaysRow = document.getElementById('mercantileDaysRow');
+            const slipMercantileDaysCol1 = document.getElementById('slipMercantileDaysCol1');
+
+            const slipNetUSDDisplay = document.getElementById('slipNetUSDDisplay');
+            const slipNetLKRDisplay = document.getElementById('slipNetLKRDisplay');
+
+            // Toast Notification
+            const toastMessage = document.getElementById('toastMessage');
+            const toastText = document.getElementById('toastText');
+            let toastTimer;
+
+            function showToast(msg) {
+                toastText.textContent = msg;
+                toastMessage.classList.remove('translate-y-20', 'opacity-0');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toastMessage.classList.add('translate-y-20', 'opacity-0');
+                }, 2600);
+            }
+
+            // Format number with commas and 2 decimals (e.g., 1,250.00)
+            function fmt(num) {
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            // Update divisor preset highlight
+            function updateDivisorButtons(val) {
+                divisorBtns.forEach(btn => {
+                    const btnVal = parseInt(btn.getAttribute('data-divisor'), 10);
+                    if (btnVal === val) {
+                        btn.classList.remove('bg-white', 'text-slate-600', 'border', 'border-slate-300');
+                        btn.classList.add('bg-[#0b3b8c]', 'text-white');
+                    } else {
+                        btn.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-300');
+                        btn.classList.remove('bg-[#0b3b8c]', 'text-white');
+                    }
+                });
+            }
+
+            // Apply Name to all sections
+            function applyEmployeeName(name) {
+                const safeName = (name && name.trim()) ? name.trim().toUpperCase() : 'YOUR NAME';
+                headerUserName.textContent = safeName;
+                slipEmpName.textContent = safeName;
+                inputEmpName.value = safeName;
+            }
+
+            // Main Calculation & UI Sync Function
+            function updatePayAdvice() {
+                try {
+                    const basic = Math.max(0, parseFloat(basicSalaryInput.value) || 0);
+                    const divisor = Math.max(1, parseFloat(dayDivisorInput.value) || 30);
+                    const phOtDays = Math.max(0, parseFloat(phOtDaysInput.value) || 0);
+                    const edpDays = Math.max(0, parseFloat(edpDaysInput.value) || 0);
+                    const mercantileDays = Math.max(0, parseFloat(mercantileDaysInput.value) || 0);
+                    const stampDuty = Math.max(0, parseFloat(stampDutyInput.value) || 0);
+                    const fxRate = Math.max(0, parseFloat(exchangeRateInput.value) || 0);
+
+                    // Daily rate calculation (e.g. 200 / 30 = 6.6667)
+                    const dailyRate = basic / divisor;
+                    dailyRateDisplay.textContent = `Daily: $${dailyRate.toFixed(2)}`;
+
+                    // Earnings in Currency (USD)
+                    const phOtUSD = dailyRate * 1.5 * phOtDays;
+                    const edpUSD = dailyRate * 1.5 * edpDays;
+                    const mercantileUSD = dailyRate * 2.0 * mercantileDays;
+                    const grossUSD = basic + phOtUSD + edpUSD + mercantileUSD;
+
+                    // Deductions in Currency (USD)
+                    const epfEmpUSD = basic * 0.08;
+                    const totalDedUSD = epfEmpUSD + stampDuty;
+
+                    // Net Salary in Currency (USD)
+                    const netUSD = Math.max(0, grossUSD - totalDedUSD);
+
+                    // Employer P/Fund & ETF Summary (12% Employer PF, 3% ETF on Basic)
+                    const pfEmployerUSD = basic * 0.12;
+                    const etfUSD = basic * 0.03;
+
+                    // Multiplier for LKR column:
+                    const lkrMultiplier = fxRate > 0 ? fxRate : 1;
+
+                    // Populate Earnings Table
+                    slipBasicUSD.textContent = fmt(basic);
+                    slipBasicLKR.textContent = fmt(basic * lkrMultiplier);
+
+                    slipPhOtUSD.textContent = fmt(phOtUSD);
+                    slipPhOtLKR.textContent = fmt(phOtUSD * lkrMultiplier);
+
+                    slipEdpUSD.textContent = fmt(edpUSD);
+                    slipEdpLKR.textContent = fmt(edpUSD * lkrMultiplier);
+
+                    slipMercantileUSD.textContent = fmt(mercantileUSD);
+                    slipMercantileLKR.textContent = fmt(mercantileUSD * lkrMultiplier);
+
+                    if (mercantileDays > 0) {
+                        mercantileEarningsRow.classList.remove('hidden');
+                        mercantileDaysRow.classList.remove('hidden');
+                    } else {
+                        mercantileEarningsRow.classList.add('hidden');
+                        mercantileDaysRow.classList.add('hidden');
+                    }
+
+                    slipTotalEarningsUSD.textContent = fmt(grossUSD);
+                    slipTotalEarningsLKR.textContent = fmt(grossUSD * lkrMultiplier);
+
+                    // Populate Deductions Table
+                    slipEpfEmpUSD.textContent = fmt(epfEmpUSD);
+                    slipEpfEmpLKR.textContent = fmt(epfEmpUSD * lkrMultiplier);
+
+                    slipStampUSD.textContent = fmt(stampDuty);
+                    slipStampLKR.textContent = fmt(stampDuty * lkrMultiplier);
+
+                    slipTotalDedUSD.textContent = fmt(totalDedUSD);
+                    slipTotalDedLKR.textContent = fmt(totalDedUSD * lkrMultiplier);
+
+                    // Populate Summary Table
+                    slipGrossPayUSD.textContent = fmt(grossUSD);
+                    slipGrossPayLKR.textContent = fmt(grossUSD * lkrMultiplier);
+
+                    slipGrossDedUSD.textContent = fmt(totalDedUSD);
+                    slipGrossDedLKR.textContent = fmt(totalDedUSD * lkrMultiplier);
+
+                    slipNetSalaryUSD.textContent = fmt(netUSD);
+                    slipNetSalaryLKR.textContent = fmt(netUSD * lkrMultiplier);
+
+                    // Populate P/Fund Summary Table
+                    slipTotalPfUSD.textContent = fmt(basic);
+                    slipTotalPfLKR.textContent = fmt(basic * lkrMultiplier);
+
+                    slipPfEmployerUSD.textContent = fmt(pfEmployerUSD);
+                    slipPfEmployerLKR.textContent = fmt(pfEmployerUSD * lkrMultiplier);
+
+                    slipEtfUSD.textContent = fmt(etfUSD);
+                    slipEtfLKR.textContent = fmt(etfUSD * lkrMultiplier);
+
+                    // Populate Hours/Days Table
+                    slipPhOtDaysCol1.textContent = fmt(phOtDays);
+                    slipEdpDaysCol1.textContent = fmt(edpDays);
+                    slipMercantileDaysCol1.textContent = fmt(mercantileDays);
+
+                    // Populate Footer Net Salary Displays (USD & LKR)
+                    const netLKRValue = netUSD * (fxRate > 0 ? fxRate : 1);
+                    slipNetUSDDisplay.textContent = `$${fmt(netUSD)}`;
+                    slipNetLKRDisplay.textContent = `LKR ${fmt(netLKRValue)}`;
+
+                    // Sync Month & Name
+                    slipMonth.textContent = inputMonth.value.trim() || 'OCTOBER 2026';
+                    slipEmpName.textContent = inputEmpName.value.trim() || 'YOUR NAME';
+                    headerUserName.textContent = inputEmpName.value.trim() || 'YOUR NAME';
+
+                    updateDivisorButtons(parseInt(dayDivisorInput.value, 10));
+
+                    return {
+                        basic, phOtDays, phOtUSD, edpDays, edpUSD, mercantileDays, mercantileUSD,
+                        grossUSD, epfEmpUSD, stampDuty, totalDedUSD, netUSD, fxRate,
+                        netLKR: netLKRValue
+                    };
+                } catch (err) {
+                    console.error('Pay Advice calculation error:', err);
+                }
+            }
+
+            // Initial Splash Timer
+            setTimeout(() => {
+                initialSplash.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    initialSplash.classList.add('hidden');
+                    loginNameInput.focus();
+                }, 500);
+            }, 800);
+
+            // Login Flow
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const enteredName = loginNameInput.value.trim();
+                if (!enteredName) {
+                    loginError.classList.remove('hidden');
+                    loginNameInput.focus();
+                    return;
+                }
+                loginError.classList.add('hidden');
+                loginForm.classList.add('hidden');
+                loginLoadingState.classList.remove('hidden');
+
+                // Simulate brief authenticating/loading delay
+                setTimeout(() => {
+                    applyEmployeeName(enteredName);
+                    updatePayAdvice();
+
+                    loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => {
+                        loginScreen.classList.add('hidden');
+                        loginForm.classList.remove('hidden');
+                        loginLoadingState.classList.add('hidden');
+                    }, 400);
+
+                    showToast(`Welcome, ${enteredName.toUpperCase()}!`);
+                }, 1000);
+            });
+
+            // Logout / Switch User Button
+            logoutBtn.addEventListener('click', () => {
+                loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                loginNameInput.value = '';
+                loginNameInput.focus();
+            });
+
+            // Attach input listeners
+            const allInputs = [
+                basicSalaryInput, dayDivisorInput, phOtDaysInput, edpDaysInput,
+                mercantileDaysInput, stampDutyInput, exchangeRateInput,
+                inputMonth, inputEmpName
+            ];
+            allInputs.forEach(el => el.addEventListener('input', updatePayAdvice));
+
+            // Divisor quick preset buttons
+            divisorBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    dayDivisorInput.value = btn.getAttribute('data-divisor');
+                    updatePayAdvice();
+                });
+            });
+
+            // Show/Hide Calculator Controls
+            toggleControlsBtn.addEventListener('click', () => {
+                const isHidden = calculatorPanel.classList.toggle('hidden');
+                toggleControlsText.textContent = isHidden ? 'Show Calculator' : 'Hide Calculator';
+            });
+
+            // Print / Save PDF
+            printBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            // Reset to Defaults
+            resetBtn.addEventListener('click', () => {
+                basicSalaryInput.value = '200.00';
+                dayDivisorInput.value = '30';
+                phOtDaysInput.value = '0.00';
+                edpDaysInput.value = '0.00';
+                mercantileDaysInput.value = '0.00';
+                stampDutyInput.value = '0.08';
+                exchangeRateInput.value = '0.00';
+                updatePayAdvice();
+                showToast('Reset to Pay Advice defaults');
+            });
+
+            // Copy Summary to Clipboard
+            copyBtn.addEventListener('click', () => {
+                const d = updatePayAdvice();
+                if (!d) return;
+
+                const lines = [
+                    `PAY ADVICE - ${slipMonth.textContent}`,
+                    `Employee Name: ${slipEmpName.textContent}`,
+                    `----------------------------------------`,
+                    `BASIC SALARY: ${fmt(d.basic)} USD`,
+                    `PH / OT (${fmt(d.phOtDays)} days @ 1.5x): ${fmt(d.phOtUSD)} USD`,
+                    `EDP INCENTIVE (${fmt(d.edpDays)} days @ 1.5x): ${fmt(d.edpUSD)} USD`,
+                    d.mercantileDays > 0 ? `MERCANTILE OT (${fmt(d.mercantileDays)} days @ 2.0x): ${fmt(d.mercantileUSD)} USD` : null,
+                    `GROSS PAY: ${fmt(d.grossUSD)} USD`,
+                    `----------------------------------------`,
+                    `E.P.F. EMPLOYEE (8%): -${fmt(d.epfEmpUSD)} USD`,
+                    `STAMP DUTY: -${fmt(d.stampDuty)} USD`,
+                    `GROSS DEDUCTION: -${fmt(d.totalDedUSD)} USD`,
+                    `----------------------------------------`,
+                    `NET SALARY (USD): $${fmt(d.netUSD)}`,
+                    `NET SALARY (LKR): LKR ${fmt(d.netLKR)}`
+                ].filter(Boolean).join('\n');
+
+                const tempArea = document.createElement('textarea');
+                tempArea.value = lines;
+                tempArea.style.position = 'fixed';
+                tempArea.style.left = '-9999px';
+                document.body.appendChild(tempArea);
+                tempArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Pay Advice summary copied to clipboard!');
+                } catch (e) {
+                    showToast('Could not copy summary');
+                }
+                document.body.removeChild(tempArea);
+            });
+
+            // Initial render
+            updatePayAdvice();
+        });
+    </script>
+</body>
+</html>
