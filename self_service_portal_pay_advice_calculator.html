@@ -353,6 +353,11 @@
                             <td class="num-col" id="slipBasicLKR">200.00</td>
                             <td class="num-col" id="slipBasicUSD">200.00</td>
                         </tr>
+                        <tr id="slipNoPayRow" class="hidden">
+                            <td class="label-col">NO PAY</td>
+                            <td class="num-col text-rose-700" id="slipNoPayLKR">-0.00</td>
+                            <td class="num-col text-rose-700" id="slipNoPayUSD">-0.00</td>
+                        </tr>
                         <tr>
                             <td class="label-col">PH / OT</td>
                             <td class="num-col" id="slipPhOtLKR">20.00</td>
@@ -392,11 +397,6 @@
                             <td class="label-col">E.P.F. EMPLOYEE CONTRIBUTION</td>
                             <td class="num-col" id="slipEpfEmpLKR">16.00</td>
                             <td class="num-col" id="slipEpfEmpUSD">16.00</td>
-                        </tr>
-                        <tr id="leaveDedRow" class="hidden">
-                            <td class="label-col">NO PAY / LEAVE DEDUCTION</td>
-                            <td class="num-col text-rose-700" id="slipLeaveDedLKR">0.00</td>
-                            <td class="num-col text-rose-700" id="slipLeaveDedUSD">0.00</td>
                         </tr>
                         <tr>
                             <td class="label-col">STAMP DUTY.</td>
@@ -473,29 +473,24 @@
                             <th style="width: 33%;"></th>
                             <th style="width: 33%;"></th>
                         </tr>
+                        <tr id="leaveDaysRow" class="hidden">
+                            <td class="label-col">NO PAY ( DAYS )</td>
+                            <td class="num-col" id="slipLeaveDaysCol1">0.00</td>
+                            <td class="num-col">0.00</td>
+                        </tr>
                         <tr>
                             <td class="label-col">PH / OT ( DAYS )</td>
-                            <td class="num-col" id="slipPhOtDaysCol1">2.00</td>
+                            <td class="num-col" id="slipPhOtDaysCol1">0.00</td>
                             <td class="num-col">0.00</td>
                         </tr>
                         <tr>
                             <td class="label-col">EDP INCENTIVE ( DAYS )</td>
-                            <td class="num-col" id="slipEdpDaysCol1">3.00</td>
+                            <td class="num-col" id="slipEdpDaysCol1">0.00</td>
                             <td class="num-col">0.00</td>
                         </tr>
-                        <tr id="mercantileDaysRow">
+                        <tr id="mercantileDaysRow" class="hidden">
                             <td class="label-col">MERCANTILE ( DAYS )</td>
                             <td class="num-col" id="slipMercantileDaysCol1">0.00</td>
-                            <td class="num-col">0.00</td>
-                        </tr>
-                        <tr id="leaveDaysRow" class="hidden">
-                            <td class="label-col">NO PAY LEAVE ( DAYS )</td>
-                            <td class="num-col text-rose-700" id="slipLeaveDaysCol1">0.00</td>
-                            <td class="num-col">0.00</td>
-                        </tr>
-                        <tr id="halfDaysRow" class="hidden">
-                            <td class="label-col">HALF DAY ( DAYS )</td>
-                            <td class="num-col text-orange-700" id="slipHalfDaysCol1">0.00</td>
                             <td class="num-col">0.00</td>
                         </tr>
                     </tbody>
@@ -573,11 +568,11 @@
             const slipTotalEarningsLKR = document.getElementById('slipTotalEarningsLKR');
             const slipTotalEarningsUSD = document.getElementById('slipTotalEarningsUSD');
 
+            const slipNoPayRow = document.getElementById('slipNoPayRow');
+            const slipNoPayLKR = document.getElementById('slipNoPayLKR');
+            const slipNoPayUSD = document.getElementById('slipNoPayUSD');
             const slipEpfEmpLKR = document.getElementById('slipEpfEmpLKR');
             const slipEpfEmpUSD = document.getElementById('slipEpfEmpUSD');
-            const leaveDedRow = document.getElementById('leaveDedRow');
-            const slipLeaveDedLKR = document.getElementById('slipLeaveDedLKR');
-            const slipLeaveDedUSD = document.getElementById('slipLeaveDedUSD');
             const slipStampLKR = document.getElementById('slipStampLKR');
             const slipStampUSD = document.getElementById('slipStampUSD');
             const slipTotalDedLKR = document.getElementById('slipTotalDedLKR');
@@ -597,14 +592,12 @@
             const slipEtfLKR = document.getElementById('slipEtfLKR');
             const slipEtfUSD = document.getElementById('slipEtfUSD');
 
+            const leaveDaysRow = document.getElementById('leaveDaysRow');
+            const slipLeaveDaysCol1 = document.getElementById('slipLeaveDaysCol1');
             const slipPhOtDaysCol1 = document.getElementById('slipPhOtDaysCol1');
             const slipEdpDaysCol1 = document.getElementById('slipEdpDaysCol1');
             const mercantileDaysRow = document.getElementById('mercantileDaysRow');
             const slipMercantileDaysCol1 = document.getElementById('slipMercantileDaysCol1');
-            const leaveDaysRow = document.getElementById('leaveDaysRow');
-            const slipLeaveDaysCol1 = document.getElementById('slipLeaveDaysCol1');
-            const halfDaysRow = document.getElementById('halfDaysRow');
-            const slipHalfDaysCol1 = document.getElementById('slipHalfDaysCol1');
 
             const slipNetUSDDisplay = document.getElementById('slipNetUSDDisplay');
             const slipNetLKRDisplay = document.getElementById('slipNetLKRDisplay');
@@ -670,34 +663,52 @@
                     const dailyRate = basic / divisor;
                     dailyRateDisplay.textContent = `Daily: $${dailyRate.toFixed(2)}`;
 
+                    // No Pay calculation (1.0x Full Day, 0.5x Half Day)
+                    const totalNoPayDays = leaveDays + (halfDays * 0.5);
+                    const noPayUSD = dailyRate * totalNoPayDays;
+
                     // Earnings in Currency (USD)
+                    // In your company paysheet, NO PAY is deducted directly under EARNINGS as a negative entry:
                     const phOtUSD = dailyRate * 1.5 * phOtDays;
                     const edpUSD = dailyRate * 1.5 * edpDays;
                     const mercantileUSD = dailyRate * 2.0 * mercantileDays;
-                    const grossUSD = basic + phOtUSD + edpUSD + mercantileUSD;
+                    const grossUSD = basic - noPayUSD + phOtUSD + edpUSD + mercantileUSD;
 
-                    // Leave / No Pay Deductions (1.0x Full Day, 0.5x Half Day)
-                    const fullDayDedUSD = dailyRate * leaveDays;
-                    const halfDayDedUSD = (dailyRate * 0.5) * halfDays;
-                    const totalLeaveDedUSD = fullDayDedUSD + halfDayDedUSD;
-
-                    // Deductions in Currency (USD)
-                    const epfEmpUSD = basic * 0.08;
-                    const totalDedUSD = epfEmpUSD + stampDuty + totalLeaveDedUSD;
-
-                    // Net Salary in Currency (USD)
-                    const netUSD = Math.max(0, grossUSD - totalDedUSD);
-
-                    // Employer P/Fund & ETF Summary (12% Employer PF, 3% ETF on Basic)
-                    const pfEmployerUSD = basic * 0.12;
-                    const etfUSD = basic * 0.03;
+                    // TOTAL FOR P.F. (Basic Salary minus No Pay)
+                    const totalForPfUSD = Math.max(0, basic - noPayUSD);
 
                     // Multiplier for LKR column:
                     const lkrMultiplier = fxRate > 0 ? fxRate : 1;
 
+                    // Deductions in Currency (USD & LKR)
+                    // EPF Employee 8% calculated strictly on TOTAL FOR P.F.
+                    const epfEmpUSD = totalForPfUSD * 0.08;
+                    const totalDedUSD = epfEmpUSD + stampDuty;
+
+                    // In Sri Lanka, if foreign currency converted (fxRate > 0), stamp duty is standard LKR 25.00
+                    const stampDutyLKR = fxRate > 0 ? 25.00 : stampDuty;
+                    const epfEmpLKR = (totalForPfUSD * lkrMultiplier) * 0.08;
+                    const totalDedLKR = epfEmpLKR + stampDutyLKR;
+
+                    // Net Salary in Currency (USD & LKR)
+                    const netUSD = Math.max(0, grossUSD - totalDedUSD);
+                    const netLKR = Math.max(0, (grossUSD * lkrMultiplier) - totalDedLKR);
+
+                    // Employer P/Fund (12%) & ETF (3%) on Total For P.F.
+                    const pfEmployerUSD = totalForPfUSD * 0.12;
+                    const etfUSD = totalForPfUSD * 0.03;
+
                     // Populate Earnings Table
                     slipBasicUSD.textContent = fmt(basic);
                     slipBasicLKR.textContent = fmt(basic * lkrMultiplier);
+
+                    if (totalNoPayDays > 0) {
+                        slipNoPayRow.classList.remove('hidden');
+                        slipNoPayUSD.textContent = `-${fmt(noPayUSD)}`;
+                        slipNoPayLKR.textContent = `-${fmt(noPayUSD * lkrMultiplier)}`;
+                    } else {
+                        slipNoPayRow.classList.add('hidden');
+                    }
 
                     slipPhOtUSD.textContent = fmt(phOtUSD);
                     slipPhOtLKR.textContent = fmt(phOtUSD * lkrMultiplier);
@@ -721,65 +732,49 @@
 
                     // Populate Deductions Table
                     slipEpfEmpUSD.textContent = fmt(epfEmpUSD);
-                    slipEpfEmpLKR.textContent = fmt(epfEmpUSD * lkrMultiplier);
-
-                    if (totalLeaveDedUSD > 0) {
-                        leaveDedRow.classList.remove('hidden');
-                        slipLeaveDedUSD.textContent = fmt(totalLeaveDedUSD);
-                        slipLeaveDedLKR.textContent = fmt(totalLeaveDedUSD * lkrMultiplier);
-                    } else {
-                        leaveDedRow.classList.add('hidden');
-                    }
+                    slipEpfEmpLKR.textContent = fmt(epfEmpLKR);
 
                     slipStampUSD.textContent = fmt(stampDuty);
-                    slipStampLKR.textContent = fmt(stampDuty * lkrMultiplier);
+                    slipStampLKR.textContent = fmt(stampDutyLKR);
 
                     slipTotalDedUSD.textContent = fmt(totalDedUSD);
-                    slipTotalDedLKR.textContent = fmt(totalDedUSD * lkrMultiplier);
+                    slipTotalDedLKR.textContent = fmt(totalDedLKR);
 
                     // Populate Summary Table
                     slipGrossPayUSD.textContent = fmt(grossUSD);
                     slipGrossPayLKR.textContent = fmt(grossUSD * lkrMultiplier);
 
                     slipGrossDedUSD.textContent = fmt(totalDedUSD);
-                    slipGrossDedLKR.textContent = fmt(totalDedUSD * lkrMultiplier);
+                    slipGrossDedLKR.textContent = fmt(totalDedLKR);
 
                     slipNetSalaryUSD.textContent = fmt(netUSD);
-                    slipNetSalaryLKR.textContent = fmt(netUSD * lkrMultiplier);
+                    slipNetSalaryLKR.textContent = fmt(netLKR);
 
-                    // Populate P/Fund Summary Table
-                    slipTotalPfUSD.textContent = fmt(basic);
-                    slipTotalPfLKR.textContent = fmt(basic * lkrMultiplier);
+                    // Populate P/Fund Summary Table (Basic - No Pay)
+                    slipTotalPfUSD.textContent = fmt(totalForPfUSD);
+                    slipTotalPfLKR.textContent = fmt(totalForPfUSD * lkrMultiplier);
 
                     slipPfEmployerUSD.textContent = fmt(pfEmployerUSD);
-                    slipPfEmployerLKR.textContent = fmt(pfEmployerUSD * lkrMultiplier);
+                    slipPfEmployerLKR.textContent = fmt((totalForPfUSD * lkrMultiplier) * 0.12);
 
                     slipEtfUSD.textContent = fmt(etfUSD);
-                    slipEtfLKR.textContent = fmt(etfUSD * lkrMultiplier);
+                    slipEtfLKR.textContent = fmt((totalForPfUSD * lkrMultiplier) * 0.03);
 
                     // Populate Hours/Days Table
-                    slipPhOtDaysCol1.textContent = fmt(phOtDays);
-                    slipEdpDaysCol1.textContent = fmt(edpDays);
-                    slipMercantileDaysCol1.textContent = fmt(mercantileDays);
-
-                    if (leaveDays > 0) {
+                    if (totalNoPayDays > 0) {
                         leaveDaysRow.classList.remove('hidden');
-                        slipLeaveDaysCol1.textContent = fmt(leaveDays);
+                        slipLeaveDaysCol1.textContent = fmt(totalNoPayDays);
                     } else {
                         leaveDaysRow.classList.add('hidden');
                     }
 
-                    if (halfDays > 0) {
-                        halfDaysRow.classList.remove('hidden');
-                        slipHalfDaysCol1.textContent = fmt(halfDays);
-                    } else {
-                        halfDaysRow.classList.add('hidden');
-                    }
+                    slipPhOtDaysCol1.textContent = fmt(phOtDays);
+                    slipEdpDaysCol1.textContent = fmt(edpDays);
+                    slipMercantileDaysCol1.textContent = fmt(mercantileDays);
 
                     // Populate Footer Net Salary Displays (USD & LKR)
-                    const netLKRValue = netUSD * (fxRate > 0 ? fxRate : 1);
                     slipNetUSDDisplay.textContent = `$${fmt(netUSD)}`;
-                    slipNetLKRDisplay.textContent = `LKR ${fmt(netLKRValue)}`;
+                    slipNetLKRDisplay.textContent = `LKR ${fmt(netLKR)}`;
 
                     // Sync Month & Name
                     slipMonth.textContent = inputMonth.value.trim() || 'OCTOBER 2026';
@@ -790,9 +785,9 @@
 
                     return {
                         basic, phOtDays, phOtUSD, edpDays, edpUSD, mercantileDays, mercantileUSD,
-                        leaveDays, halfDays, totalLeaveDedUSD,
+                        leaveDays, halfDays, totalNoPayDays, noPayUSD, totalForPfUSD,
                         grossUSD, epfEmpUSD, stampDuty, totalDedUSD, netUSD, fxRate,
-                        netLKR: netLKRValue
+                        netLKR: netLKR
                     };
                 } catch (err) {
                     console.error('Pay Advice calculation error:', err);
@@ -897,13 +892,14 @@
                     `Employee Name: ${slipEmpName.textContent}`,
                     `----------------------------------------`,
                     `BASIC SALARY: ${fmt(d.basic)} USD`,
+                    d.totalNoPayDays > 0 ? `NO PAY (${fmt(d.totalNoPayDays)} days): -${fmt(d.noPayUSD)} USD` : null,
                     `PH / OT (${fmt(d.phOtDays)} days @ 1.5x): ${fmt(d.phOtUSD)} USD`,
                     `EDP INCENTIVE (${fmt(d.edpDays)} days @ 1.5x): ${fmt(d.edpUSD)} USD`,
                     d.mercantileDays > 0 ? `MERCANTILE OT (${fmt(d.mercantileDays)} days @ 2.0x): ${fmt(d.mercantileUSD)} USD` : null,
                     `GROSS PAY: ${fmt(d.grossUSD)} USD`,
                     `----------------------------------------`,
+                    `TOTAL FOR P.F.: ${fmt(d.totalForPfUSD)} USD`,
                     `E.P.F. EMPLOYEE (8%): -${fmt(d.epfEmpUSD)} USD`,
-                    d.totalLeaveDedUSD > 0 ? `NO PAY LEAVE (${fmt(d.leaveDays)} full, ${fmt(d.halfDays)} half): -${fmt(d.totalLeaveDedUSD)} USD` : null,
                     `STAMP DUTY: -${fmt(d.stampDuty)} USD`,
                     `GROSS DEDUCTION: -${fmt(d.totalDedUSD)} USD`,
                     `----------------------------------------`,
